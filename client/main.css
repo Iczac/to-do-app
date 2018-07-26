@@ -13,6 +13,10 @@ body {
     font-size: 14px;
 }
 
+.task_select {
+    float: right;
+}
+
 .container {
     max-width: 600px;
     margin: 0 auto;
@@ -104,6 +108,50 @@ header .hide-completed {
 
 .toggle-private {
     margin-left: 5px;
+}
+
+.badge {
+    display: inline-block;
+    padding: .25em .4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1.5 !important;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25rem;
+}
+
+.badge-color {
+    color: #fff;
+    background-color: #0e7ef3 !important;
+}
+
+.c-activated {
+    font-size: 20px !important;
+    text-align: center !important;
+    color: white !important;
+    background-color: cornflowerblue !important;
+}
+
+.c-head {
+    font-size: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.c-list {
+    font-size: 16px;
+    text-align: left;
+    color: black;
+    background-color: white;
+}
+
+.c-list:hover {
+    font-size: 20px;
+    text-align: center;
+    color: white !important;
+    background-color: cornflowerblue !important;
 }
 
 @media (max-width: 600px) {
