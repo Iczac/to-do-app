@@ -19,7 +19,8 @@ class App extends Component {
             hideCompleted: false,
             company: 0,
             company_name: "All Companies",
-            incomplete_count: undefined
+            incomplete_count: undefined,
+            search_text: ""
         };
     }
 
@@ -31,8 +32,32 @@ class App extends Component {
         const priority = parseInt(ReactDOM.findDOMNode(this.refs.priority_select).value);
         const company = parseInt(this.state.company);
 
-
+        let task_count = Tasks.find({company_id: this.state.company}).count()
         let status_msg = document.getElementById('status_msg');
+
+        let company_check = Companies.find({id: this.state.company}).count();
+        if (!company_check) {
+            this.setState({
+                company: 0
+            })
+        }
+
+        if (this.state.company !== 0) {
+            if (task_count >= 10) {
+                status_msg.innerHTML = 'You can only add 10 Tasks per Company';            
+                status_msg.style.border = '10px solid red';
+                status_msg.style.backgroundColor = 'red';
+                status_msg.style.display = 'block';
+                return true
+            }
+        } else {
+            status_msg.innerHTML = 'Please Select a company';            
+            status_msg.style.border = '10px solid red';
+            status_msg.style.backgroundColor = 'red';
+            status_msg.style.display = 'block';
+            return true
+        }
+
         if (text.length < 5) {
             status_msg.innerHTML = 'To-Do Text must be longer than 5 Characters';            
             status_msg.style.border = '10px solid red';
@@ -61,16 +86,27 @@ class App extends Component {
         event.preventDefault();
         const text = ReactDOM.findDOMNode(this.refs.comInput).value.trim();
         const new_id = (Companies.find({}).count() + 1)
-        Companies.insert({
-            id: new_id,
-            name: text,
-            createdAt: new Date()
-        })
-        ReactDOM.findDOMNode(this.refs.comInput).value = "";
+        if (new_id > 10) {
+            status_msg.innerHTML = "You can't add more than 10 companies";            
+            status_msg.style.border = '10px solid red';
+            status_msg.style.backgroundColor = 'red';
+            status_msg.style.display = 'block';
+        } else {
+            status_msg.style.display = 'none';
+            Companies.insert({
+                id: new_id,
+                name: text,
+                createdAt: new Date()
+            })
+            ReactDOM.findDOMNode(this.refs.comInput).value = "";
+        }
+        
     }
 
     handleComOnChange(event) {
         event.preventDefault();
+        let status_msg = document.getElementById('status_msg');
+        status_msg.style.display = 'none';
         let act_html = document.getElementsByClassName("c-activated");
         if (act_html.length > 0) {
             act_html[0].classList.remove("c-activated");
@@ -84,13 +120,15 @@ class App extends Component {
         }
         
         let company_name = Companies.find({ id: id },{ name : 1 })
-
-        event.target.classList.add("c-activated")
-        this.setState({
-            company: id,
-            company_name: company_name.name,
-            incomplete_count: incomplete_count
-        })
+        if (event.target.id !== 'title-head' && event.target.id !== 'company-add') {
+            event.target.classList.add("c-activated")
+            this.setState({
+                company: id,
+                company_name: company_name.name,
+                incomplete_count: incomplete_count
+            })
+        }
+        
     }
 
     toggleHideCompleted() {
@@ -106,13 +144,37 @@ class App extends Component {
         ));
     }
 
+    handleSearchText(event) {
+        
+        let search_text = ReactDOM.findDOMNode(this.refs.searchInput).value.trim()
+        if (search_text.length > 0) {
+            this.setState({
+                search_text: search_text
+            })
+        } else {
+            this.setState({
+                search_text: ""
+            })
+        }
+    }
+
     renderTasks() {
         const company = parseInt(this.state.company);
         let filteredTasks;
-        if (company === 0) {
-            filteredTasks = Tasks.find({}).fetch()
+        
+        if (this.state.search_text === "") {
+            if (company === 0) {
+                filteredTasks = Tasks.find({}).fetch()
+            } else {
+                filteredTasks = Tasks.find({"company_id" : company}).fetch()
+            }
         } else {
-            filteredTasks = Tasks.find({"company_id" : company}).fetch()
+            if (company === 0) {
+                filteredTasks = Tasks.find({'text': {'$regex': this.state.search_text, '$options': 'i'}})
+            } else {
+                filteredTasks = Tasks.find({'$and': [{company_id: this.state.company}, {'text': {'$regex': this.state.search_text, '$options': 'i'}}]})
+            }
+            
         }
         
         return filteredTasks.map((task) => (
@@ -125,16 +187,17 @@ class App extends Component {
             <Row>
                 <Col md={1}></Col>
                 <Col md={2}>
-                    <ListGroup onClick={this.handleComOnChange.bind(this)}>
-                    <ListGroupItem className="c-head">Companies</ListGroupItem>
+                    <ListGroup style={{position: "fixed"}} onClick={this.handleComOnChange.bind(this)}>
+                    <ListGroupItem id="title-head" className="list-group-head c-head">Companies</ListGroupItem>
                     <ListGroupItem className="c-list c-activated" value="0" href="#">All</ListGroupItem>
                     {this.renderCompanies()}
                     <ListGroupItem>
                         <form className="new-task" onSubmit={this.handleCompanySubmit.bind(this)} >
                             <input
+                            id="company-add"
                             type="text"
                             ref="comInput"
-                            placeholder="Type to add new company"
+                            placeholder="Add new Company"
                             />
                         </form>
                     </ListGroupItem>
@@ -183,7 +246,17 @@ class App extends Component {
                     </ul>
                     
                 </Col> 
-                <Col md={2}></Col>
+                <Col md={2}>
+                    <div className="search-task">
+                        <input
+                        onChange={this.handleSearchText.bind(this)}
+                        style={{position: "fixed"}}
+                        type="text"
+                        ref="searchInput"
+                        placeholder="Search Task"
+                        />
+                    </div>     
+                </Col>
                 </Row>
         );
     }
