@@ -4,6 +4,8 @@ import $ from 'jquery';
 
 // Task component - represents a single todo item
 export default class Task extends Component {
+
+    // Check/Uncheck task as done
     toggleChecked() {
         // Set the checked property to the opposite of its current value
         Tasks.update(this.props.task._id, {
@@ -11,6 +13,7 @@ export default class Task extends Component {
         });
     }
 
+    // Handling priority change
     handleChange(event) {
         let priority_no = parseInt(event.target.value)
         Tasks.update(this.props.task._id, {
@@ -18,6 +21,7 @@ export default class Task extends Component {
         })
     }
 
+    // Deleting task
     deleteThisTask() {
         Tasks.remove(this.props.task._id);
     }
