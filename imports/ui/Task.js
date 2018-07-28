@@ -66,7 +66,7 @@ export default class Task extends Component {
                 onClick={this.toggleChecked.bind(this)}
                 />
         
-                <span className="text">{this.props.task.text}</span>
+                <span className="text" style={{wordBreak: "break-all", wordWrap: "break-word"}}>{this.props.task.text}</span>
             </li>
         );
     }

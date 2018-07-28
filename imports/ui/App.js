@@ -24,9 +24,9 @@ class App extends Component {
         };
     }
 
+    // Handle Task Submit Event
     handleSubmit(event) {
         event.preventDefault();
-
         // Find the text field via the React ref
         const text = ReactDOM.findDOMNode(this.refs.textInput).value.trim();
         const priority = parseInt(ReactDOM.findDOMNode(this.refs.priority_select).value);
@@ -36,10 +36,13 @@ class App extends Component {
         let status_msg = document.getElementById('status_msg');
 
         let company_check = Companies.find({id: this.state.company}).count();
+        
         if (!company_check) {
-            this.setState({
-                company: 0
-            })
+            status_msg.innerHTML = 'Please Select a company';            
+            status_msg.style.border = '10px solid red';
+            status_msg.style.backgroundColor = 'red';
+            status_msg.style.display = 'block';
+            return true
         }
 
         if (this.state.company !== 0) {
@@ -105,6 +108,18 @@ class App extends Component {
 
     handleComOnChange(event) {
         event.preventDefault();
+        if (event.target.id === "title-head" || event.target.id === "company-add" || event.target.id === "new-com") {
+            return true;
+        }
+
+        if (event.target.className === "delete" ) {
+            this.setState({
+                company: 0,
+                company_name: "All Companies"
+            })
+            document.getElementById('all-title').classList.add("c-activated")
+            return true;
+        }
         let status_msg = document.getElementById('status_msg');
         status_msg.style.display = 'none';
         let act_html = document.getElementsByClassName("c-activated");
@@ -113,18 +128,23 @@ class App extends Component {
         } 
         let id = parseInt(event.target.getAttribute("value"))
         let incomplete_count;
+        let company_name;
+
         if (id === 0) {
             incomplete_count = Tasks.find({ checked: { $ne: true } }).count()
+            company_name = "All Companies";
         } else {
             incomplete_count = Tasks.find({ company_id: id, checked: { $ne: true } }).count()
+            let company_name_cur = Companies.find({ id: id },{ name : 1 })
+            company_name_cur.forEach((each)=> {company_name = each.name})
         }
         
-        let company_name = Companies.find({ id: id },{ name : 1 })
-        if (event.target.id !== 'title-head' && event.target.id !== 'company-add') {
+        
+        if (event.target.id !== 'title-head' && event.target.id !== 'company-add' && event.target.id !== 'new-com') {
             event.target.classList.add("c-activated")
             this.setState({
                 company: id,
-                company_name: company_name.name,
+                company_name: company_name,
                 incomplete_count: incomplete_count
             })
         }
@@ -164,15 +184,15 @@ class App extends Component {
         
         if (this.state.search_text === "") {
             if (company === 0) {
-                filteredTasks = Tasks.find({}).fetch()
+                filteredTasks = Tasks.find({},{sort: { priority: -1 }}).fetch()
             } else {
-                filteredTasks = Tasks.find({"company_id" : company}).fetch()
+                filteredTasks = Tasks.find({"company_id" : company},{sort: { priority: -1 }}).fetch()
             }
         } else {
             if (company === 0) {
-                filteredTasks = Tasks.find({'text': {'$regex': this.state.search_text, '$options': 'i'}})
+                filteredTasks = Tasks.find({'$and': [{'text': {'$regex': this.state.search_text, '$options': 'i'}}]},{sort: { priority: -1 }})
             } else {
-                filteredTasks = Tasks.find({'$and': [{company_id: this.state.company}, {'text': {'$regex': this.state.search_text, '$options': 'i'}}]})
+                filteredTasks = Tasks.find({'$and': [{company_id: this.state.company}, {'text': {'$regex': this.state.search_text, '$options': 'i'}}]},{sort: { priority: -1 }})
             }
             
         }
@@ -187,11 +207,11 @@ class App extends Component {
             <Row>
                 <Col md={1}></Col>
                 <Col md={2}>
-                    <ListGroup style={{position: "fixed"}} onClick={this.handleComOnChange.bind(this)}>
+                    <ListGroup style={{position: "fixed", maxWidth: "280px"}} onClick={this.handleComOnChange.bind(this)}>
                     <ListGroupItem id="title-head" className="list-group-head c-head">Companies</ListGroupItem>
-                    <ListGroupItem className="c-list c-activated" value="0" href="#">All</ListGroupItem>
+                    <ListGroupItem id="all-title" className="c-list c-activated" value="0" href="#">All</ListGroupItem>
                     {this.renderCompanies()}
-                    <ListGroupItem>
+                    <ListGroupItem id="new-com">
                         <form className="new-task" onSubmit={this.handleCompanySubmit.bind(this)} >
                             <input
                             id="company-add"
@@ -213,7 +233,7 @@ class App extends Component {
                                     textAlign: 'center',
                                     border: '10px solid red',
                                     borderRadius: '10px'}} id='status_msg'></h3>
-                        <h1>{this.state.company_name} To Do List ({this.state.incomplete_count === undefined ? this.props.incompleteCount : this.state.incomplete_count})</h1>
+                        <h1 style={{wordBreak: "break-all", wordWrap: "break-word"}}>{this.state.company_name} To Do List ({this.state.incomplete_count === undefined ? this.props.incompleteCount : this.state.incomplete_count})</h1>
                         <label className="hide-completed">
                             <input
                             type="checkbox"
@@ -231,6 +251,15 @@ class App extends Component {
                             />
                             <label>
                                 <span>Select Priority for New Task </span> 
+                                <select ref="priority_select">
+                                    <option value="0">Priority</option>
+                                    <option value="3">High</option>
+                                    <option value="2">Medium</option>
+                                    <option value="1">low</option>
+                                </select>
+                            </label>
+                            <label style={{float: "right"}}>
+                                <span>Filter by Priority </span> 
                                 <select ref="priority_select">
                                     <option value="0">Priority</option>
                                     <option value="3">High</option>
