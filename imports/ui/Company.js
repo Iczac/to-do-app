@@ -2,13 +2,14 @@ import React, { Component } from 'react'
 import { Companies } from '../api/companies.js';
 import { Tasks } from '../api/tasks.js';
 import { ListGroupItem } from 'react-bootstrap';
+import { Meteor } from 'meteor/meteor'
 import $ from 'jquery';
 
 export default class Company extends Component {
 
     deleteThisCompany() {
-        Tasks._collection.remove({}, {id: this.props.company.id});
-        Companies.remove(this.props.company._id);
+        Meteor.call('tasks.removeRelatedTasks', this.props.company.id)
+        Meteor.call('companies.removeCompany', this.props.company._id)
     }
 
     render() {

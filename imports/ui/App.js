@@ -7,6 +7,7 @@ import Task from './Task.js';
 import { Row, Col, ListGroup, ListGroupItem } from 'react-bootstrap';
 import Company from './Company.js';
 import $ from 'jquery';
+import { Meteor } from 'meteor/meteor'
 
  
 // App component - represents the whole app
@@ -78,13 +79,7 @@ class App extends Component {
             status_msg.style.backgroundColor = 'red';
             status_msg.style.display = 'block';
         } else {
-            Tasks.insert({
-                text,
-                priority: priority,
-                company_id: company,
-                checked: false,
-                createdAt: new Date(),
-            });
+            Meteor.call('tasks.insertTask', text, priority, company)
 
             // Get new total task count and update after insertion
             let incomplete_count = Tasks.find({ company_id: this.state.company , checked: { $ne: true } }).count()
@@ -176,6 +171,14 @@ class App extends Component {
         event.preventDefault();
         // Get new company name from input
         const text = ReactDOM.findDOMNode(this.refs.comInput).value.trim();
+
+        if (text === "") {
+            status_msg.innerHTML = "Company name cannot be Blank";            
+            status_msg.style.border = '10px solid red';
+            status_msg.style.backgroundColor = 'red';
+            status_msg.style.display = 'block';
+            return true;
+        }
 
         // Generating new company id
         let new_id_cur = Companies.find({},{sort: {id: -1}, limit: 1})

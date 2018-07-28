@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Tasks } from '../api/tasks.js';
+import { Meteor } from 'meteor/meteor';
 import $ from 'jquery';
 
 // Task component - represents a single todo item
@@ -8,22 +9,18 @@ export default class Task extends Component {
     // Check/Uncheck task as done
     toggleChecked() {
         // Set the checked property to the opposite of its current value
-        Tasks.update(this.props.task._id, {
-            $set: { checked: !this.props.task.checked },
-        });
+        Meteor.call('tasks.toggleCheck', this.props.task._id, this.props.task.checked)
     }
 
     // Handling priority change
     handleChange(event) {
         let priority_no = parseInt(event.target.value)
-        Tasks.update(this.props.task._id, {
-            $set: { priority: priority_no}
-        })
+        Meteor.call('tasks.changePriority', this.props.task._id, priority_no)
     }
 
     // Deleting task
     deleteThisTask() {
-        Tasks.remove(this.props.task._id);
+        Meteor.call('tasks.deleteTask', this.props.task._id)
     }
 
     render() {
